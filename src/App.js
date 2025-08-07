@@ -671,12 +671,12 @@ const AnamneseClinica = ({ clients, anamneseForms, userId, db }) => {
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const [showErrorMessage, setShowErrorMessage] = useState(false);
 
-    const initialFormState = {
+    const initialFormState = useMemo(() => ({
         queixa_principal: '', procedimentos_anteriores: '', reacao_adversa: '',
         doenca_preexistente: '', alergia: '', medicamento_continuo: '',
         gestante_lactante: 'Não', marcapasso_protese: 'Não', rotina_skincare: '',
         fumante: 'Não', protetor_solar: 'Não'
-    };
+    }), []);
 
     useEffect(() => {
         if (selectedClient) {
@@ -685,7 +685,7 @@ const AnamneseClinica = ({ clients, anamneseForms, userId, db }) => {
         } else {
             setFormData({});
         }
-    }, [selectedClient, anamneseForms]);
+    }, [selectedClient, anamneseForms, initialFormState]);
 
     const handleSave = async () => {
         if (!selectedClient) {
