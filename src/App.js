@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { User, Calendar, DollarSign, Package, ClipboardList, TrendingUp, Home, PlusCircle, Users, Box, Settings, ClipboardPlus, CheckCircle, XCircle, Search, Edit, Trash2, ChevronLeft, ChevronRight, Eye, Loader2, LogOut, Mail, Lock } from 'lucide-react';
+import { User, Calendar, DollarSign, Package, ClipboardList, TrendingUp, Home, PlusCircle, Users, Box, Settings, ClipboardPlus, CheckCircle, XCircle, Search, Edit, Trash2, ChevronLeft, ChevronRight, Eye, Loader2, LogOut, Mail, Lock, ClipboardPen } from 'lucide-react';
 
 // --- Importações do Firebase ---
 import { initializeApp } from 'firebase/app';
@@ -79,7 +79,8 @@ const LoginScreen = () => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleAuthAction = async () => {
+    const handleAuthAction = async (e) => {
+        e.preventDefault(); // Impede o recarregamento da página
         setIsLoading(true);
         setError('');
         try {
@@ -88,8 +89,8 @@ const LoginScreen = () => {
             } else {
                 await createUserWithEmailAndPassword(auth, email, password);
             }
-        } catch (e) {
-            switch (e.code) {
+        } catch (err) {
+            switch (err.code) {
                 case 'auth/user-not-found':
                 case 'auth/invalid-credential':
                     setError('E-mail ou senha inválidos.');
@@ -123,24 +124,26 @@ const LoginScreen = () => {
                     </div>
                     <h2 className="text-2xl font-bold text-gray-800">{isLoginMode ? 'Acessar o Sistema' : 'Criar Nova Conta'}</h2>
                 </div>
-
-                <div className="space-y-6">
-                    <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input type="email" placeholder="E-mail" value={email} onChange={e => setEmail(e.target.value)} className="w-full p-4 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                
+                <form onSubmit={handleAuthAction}>
+                    <div className="space-y-6">
+                        <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input type="email" placeholder="E-mail" value={email} onChange={e => setEmail(e.target.value)} className="w-full p-4 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                        </div>
+                        <div className="relative">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input type="password" placeholder="Senha" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-4 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                        </div>
                     </div>
-                    <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input type="password" placeholder="Senha" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-4 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
-                    </div>
-                </div>
 
-                {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
+                    {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
 
-                <button onClick={handleAuthAction} disabled={isLoading} className="mt-8 w-full bg-purple-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-purple-700 transition-colors text-lg flex items-center justify-center disabled:bg-purple-400">
-                    {isLoading && <Loader2 className="animate-spin mr-2" />}
-                    {isLoginMode ? 'Entrar' : 'Cadastrar'}
-                </button>
+                    <button type="submit" disabled={isLoading} className="mt-8 w-full bg-purple-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-purple-700 transition-colors text-lg flex items-center justify-center disabled:bg-purple-400">
+                        {isLoading && <Loader2 className="animate-spin mr-2" />}
+                        {isLoginMode ? 'Entrar' : 'Cadastrar'}
+                    </button>
+                </form>
 
                 <p className="mt-6 text-center text-sm">
                     {isLoginMode ? 'Não tem uma conta?' : 'Já possui uma conta?'}
@@ -1005,6 +1008,19 @@ const Relatorios = () => {
     );
 }
 
+const Receituario = () => {
+    return (
+        <div>
+            <SectionTitle title="Receituário" subtitle="Emissão e gerenciamento de receituários médicos." />
+            <div className="bg-white p-8 rounded-2xl shadow-lg text-center">
+                <h2 className="text-2xl font-bold mb-6 text-gray-700">Protótipo de Receituário</h2>
+                <p className="text-gray-500">Esta área será desenvolvida para a criação, impressão e histórico de receituários médicos para as clientes.</p>
+                <ClipboardPen className="mx-auto mt-8 text-purple-300" size={64} />
+            </div>
+        </div>
+    );
+}
+
 
 // --- Componente Principal da Aplicação (Após Login) ---
 const MainApp = ({ user, handleLogout }) => {
@@ -1062,12 +1078,14 @@ const MainApp = ({ user, handleLogout }) => {
                 return <Clientes clients={clients} appointments={appointments} services={services} userId={user.uid} db={db} />;
             case 'Anamnese':
                 return <AnamneseClinica clients={clients} anamneseForms={anamneseForms} userId={user.uid} db={db} />;
+            case 'Receituário':
+                return <Receituario />;
+            case 'Serviços':
+                return <Servicos services={services} userId={user.uid} db={db} />;
             case 'Estoque':
                 return <Estoque inventory={inventory} userId={user.uid} db={db} />;
             case 'Financeiro':
                 return <Financeiro financials={financials} userId={user.uid} db={db} />;
-            case 'Serviços':
-                return <Servicos services={services} userId={user.uid} db={db} />;
             case 'Relatórios':
                 return <Relatorios />;
             default:
@@ -1114,6 +1132,7 @@ const MainApp = ({ user, handleLogout }) => {
                             <NavItem label="Agenda" icon={<Calendar size={20} />} tabName="Agenda" />
                             <NavItem label="Clientes" icon={<Users size={20} />} tabName="Clientes" />
                             <NavItem label="Anamnese" icon={<ClipboardPlus size={20} />} tabName="Anamnese" />
+                            <NavItem label="Receituário" icon={<ClipboardPen size={20} />} tabName="Receituário" />
                             <NavItem label="Serviços" icon={<ClipboardList size={20} />} tabName="Serviços" />
                             <NavItem label="Estoque" icon={<Box size={20} />} tabName="Estoque" />
                             <NavItem label="Financeiro" icon={<DollarSign size={20} />} tabName="Financeiro" />
