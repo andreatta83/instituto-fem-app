@@ -796,7 +796,7 @@ const AnamneseClinica = ({ clients, anamneseForms, userId, db }) => {
                                     {!isEditing && (
                                         <div className="flex items-center space-x-2">
                                             <button onClick={() => alert('Exportar PDF: Funcionalidade em desenvolvimento.')} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-full"><FileDown size={18} /></button>
-                                            <button onClick={() => alert('Imprimir: Funcionalidade em desenvolvimento.')} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full"><Printer size={18} /></button>
+                                            <button onClick={() => window.print()} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full"><Printer size={18} /></button>
                                             <button onClick={() => setIsEditing(true)} className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-100 rounded-full"><Edit size={18} /></button>
                                         </div>
                                     )}
