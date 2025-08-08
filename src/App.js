@@ -160,13 +160,23 @@ const LoginScreen = () => {
 // --- PÁGINAS DA APLICAÇÃO ---
 
 const Dashboard = ({ clients, appointments, financials, inventory, services, setActiveTab, openNewAppointmentModal }) => {
-    const today = new Date().toISOString().split('T')[0];
+    // CORREÇÃO: Usar data local para "hoje"
+    const getTodayLocalString = () => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const todayLocalString = getTodayLocalString();
+    
     const upcomingAppointments = appointments
-        .filter(a => a.date && a.date.startsWith(today))
+        .filter(a => a.date && a.date.startsWith(todayLocalString))
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     const revenueToday = financials
-        .filter(f => f.type === 'Entrada' && f.date === today)
+        .filter(f => f.type === 'Entrada' && f.date === todayLocalString)
         .reduce((sum, item) => sum + item.amount, 0);
 
     const lowStockItems = inventory.filter(item => item.quantity <= item.minStock);
@@ -553,9 +563,10 @@ const Clientes = ({ clients, appointments, services, userId, db }) => {
     
     const formatDisplayDate = (dateString) => {
         if (!dateString) return '';
-        // Corrige o problema de fuso horário adicionando T00:00:00
-        const date = new Date(`${dateString}T00:00:00`);
-        return date.toLocaleDateString('pt-BR');
+        const date = new Date(dateString);
+        // Adiciona o fuso horário local para corrigir a exibição
+        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR');
     };
 
     return (
@@ -1248,17 +1259,16 @@ const MainApp = ({ user, handleLogout }) => {
                 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
                 .animate-fade-in { animation: fade-in 0.3s ease-in-out forwards; }
                 @media print {
-                    body {
-                        background: none !important;
+                    body * {
+                        visibility: hidden;
                     }
-                    .no-print {
-                        display: none !important;
+                    .print-area, .print-area * {
+                        visibility: visible;
                     }
                     .print-area {
-                        display: block !important;
                         position: absolute;
-                        top: 0;
                         left: 0;
+                        top: 0;
                         width: 100%;
                     }
                 }
