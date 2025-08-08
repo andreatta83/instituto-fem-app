@@ -160,7 +160,6 @@ const LoginScreen = () => {
 // --- PÁGINAS DA APLICAÇÃO ---
 
 const Dashboard = ({ clients, appointments, financials, inventory, services, setActiveTab, openNewAppointmentModal }) => {
-    // CORREÇÃO: Usar data local para "hoje"
     const getTodayLocalString = () => {
         const today = new Date();
         const year = today.getFullYear();
@@ -200,7 +199,13 @@ const Dashboard = ({ clients, appointments, financials, inventory, services, set
                 serviceCount[service.name] = (serviceCount[service.name] || 0) + 1;
             }
         });
-        return Object.keys(serviceCount).map(name => ({ name, value: serviceCount[name] }));
+        
+        // CORREÇÃO: Ordenar e pegar os top 5
+        const sortedServices = Object.keys(serviceCount)
+            .map(name => ({ name, value: serviceCount[name] }))
+            .sort((a, b) => b.value - a.value);
+
+        return sortedServices.slice(0, 5);
     }, [appointments, services]);
 
     const COLORS = ['#fecdd3', '#e9d5ff', '#bfdbfe', '#fde68a', '#a7f3d0'];
@@ -230,7 +235,7 @@ const Dashboard = ({ clients, appointments, financials, inventory, services, set
                     </ResponsiveContainer>
                 </div>
                 <div className="bg-white p-6 rounded-2xl shadow-lg">
-                    <h3 className="font-bold text-lg mb-4 text-gray-700">Serviços Mais Populares</h3>
+                    <h3 className="font-bold text-lg mb-4 text-gray-700">Top 5 Serviços Populares</h3>
                      <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
                             <Pie data={topServicesData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8">
@@ -564,7 +569,6 @@ const Clientes = ({ clients, appointments, services, userId, db }) => {
     const formatDisplayDate = (dateString) => {
         if (!dateString) return '';
         const date = new Date(dateString);
-        // Adiciona o fuso horário local para corrigir a exibição
         const userTimezoneOffset = date.getTimezoneOffset() * 60000;
         return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR');
     };
@@ -826,7 +830,7 @@ const AnamneseClinica = ({ clients, anamneseForms, userId, db }) => {
                 </div>
             </div>
             {selectedClient && currentAnamnese && (
-                <div className="hidden print:block">
+                <div className="hidden print-block">
                     <AnamnesePrintLayout client={selectedClient} formData={currentAnamnese} />
                 </div>
             )}
@@ -1270,6 +1274,10 @@ const MainApp = ({ user, handleLogout }) => {
                         left: 0;
                         top: 0;
                         width: 100%;
+                        height: 100%;
+                    }
+                    .no-print {
+                        display: none !important;
                     }
                 }
             `}</style>
