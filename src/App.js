@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { User, Calendar, DollarSign, Package, ClipboardList, TrendingUp, Home, PlusCircle, Users, Box, Settings, ClipboardPlus, CheckCircle, XCircle, Search, Edit, Trash2, ChevronLeft, ChevronRight, Eye, Loader2, LogOut, Mail, Lock, ClipboardPen } from 'lucide-react';
+import { User, Calendar, DollarSign, Package, ClipboardList, TrendingUp, Home, PlusCircle, Users, Box, Settings, ClipboardPlus, CheckCircle, XCircle, Search, Edit, Trash2, ChevronLeft, ChevronRight, Eye, Loader2, LogOut, Mail, Lock, ClipboardPen, ClipboardCheck } from 'lucide-react';
 
 // --- Importações do Firebase ---
 import { initializeApp } from 'firebase/app';
@@ -1021,6 +1021,19 @@ const Receituario = () => {
     );
 }
 
+const Atendimentos = () => {
+    return (
+        <div>
+            <SectionTitle title="Atendimentos" subtitle="Registro de sessões e acompanhamento de tratamentos." />
+            <div className="bg-white p-8 rounded-2xl shadow-lg text-center">
+                <h2 className="text-2xl font-bold mb-6 text-gray-700">Protótipo de Atendimentos</h2>
+                <p className="text-gray-500">Esta área será desenvolvida para registrar cada atendimento, anotar observações da sessão e acompanhar a evolução do tratamento.</p>
+                <ClipboardCheck className="mx-auto mt-8 text-purple-300" size={64} />
+            </div>
+        </div>
+    );
+}
+
 
 // --- Componente Principal da Aplicação (Após Login) ---
 const MainApp = ({ user, handleLogout }) => {
@@ -1078,6 +1091,8 @@ const MainApp = ({ user, handleLogout }) => {
                 return <Clientes clients={clients} appointments={appointments} services={services} userId={user.uid} db={db} />;
             case 'Anamnese':
                 return <AnamneseClinica clients={clients} anamneseForms={anamneseForms} userId={user.uid} db={db} />;
+            case 'Atendimentos':
+                return <Atendimentos />;
             case 'Receituário':
                 return <Receituario />;
             case 'Serviços':
@@ -1132,6 +1147,7 @@ const MainApp = ({ user, handleLogout }) => {
                             <NavItem label="Agenda" icon={<Calendar size={20} />} tabName="Agenda" />
                             <NavItem label="Clientes" icon={<Users size={20} />} tabName="Clientes" />
                             <NavItem label="Anamnese" icon={<ClipboardPlus size={20} />} tabName="Anamnese" />
+                            <NavItem label="Atendimentos" icon={<ClipboardCheck size={20} />} tabName="Atendimentos" />
                             <NavItem label="Receituário" icon={<ClipboardPen size={20} />} tabName="Receituário" />
                             <NavItem label="Serviços" icon={<ClipboardList size={20} />} tabName="Serviços" />
                             <NavItem label="Estoque" icon={<Box size={20} />} tabName="Estoque" />
