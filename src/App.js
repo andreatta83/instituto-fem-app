@@ -45,7 +45,7 @@ const StatCard = ({ title, value, icon, color }) => (
 );
 
 const SectionTitle = ({ title, subtitle }) => (
-    <div className="mb-8">
+    <div className="mb-8 print:hidden">
         <h1 className="text-4xl font-bold text-gray-800">{title}</h1>
         <p className="text-md text-gray-500 mt-1">{subtitle}</p>
     </div>
@@ -736,82 +736,150 @@ const AnamneseClinica = ({ clients, anamneseForms, userId, db }) => {
     
     return (
         <div>
-            <SectionTitle title="Anamnese Clínica" subtitle="Gerencie o histórico de anamneses das suas clientes." />
-            <div className="bg-white p-8 rounded-2xl shadow-lg">
-                {!selectedClient ? (
-                    <div className="mb-6">
-                        <label className="block text-lg font-semibold text-gray-700 mb-2">Buscar Cliente</label>
-                        <div className="relative">
-                            <input type="text" placeholder="Digite o nome ou CPF da cliente..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        </div>
-                        {filteredClients.length > 0 && (
-                            <ul className="mt-2 border border-gray-200 rounded-lg bg-white max-h-60 overflow-y-auto">
-                                {filteredClients.map(client => (
-                                    <li key={client.id} onClick={() => selectClient(client)} className="p-3 hover:bg-pink-50 cursor-pointer border-b last:border-b-0">
-                                        {client.name} - {client.cpf}
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-                ) : (
-                    <div>
-                        <div className="mb-6 p-4 bg-purple-50 rounded-lg flex justify-between items-center">
-                            <div>
-                                <p className="font-bold text-lg text-purple-900">{selectedClient.name}</p>
-                                <p className="text-sm text-gray-600">{selectedClient.cpf}</p>
+            <div className="print:hidden">
+                <SectionTitle title="Anamnese Clínica" subtitle="Gerencie o histórico de anamneses das suas clientes." />
+                <div className="bg-white p-8 rounded-2xl shadow-lg">
+                    {!selectedClient ? (
+                        <div className="mb-6">
+                            <label className="block text-lg font-semibold text-gray-700 mb-2">Buscar Cliente</label>
+                            <div className="relative">
+                                <input type="text" placeholder="Digite o nome ou CPF da cliente..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                             </div>
-                            <button onClick={() => setSelectedClient(null)} className="text-sm text-purple-600 hover:underline">Trocar Cliente</button>
+                            {filteredClients.length > 0 && (
+                                <ul className="mt-2 border border-gray-200 rounded-lg bg-white max-h-60 overflow-y-auto">
+                                    {filteredClients.map(client => (
+                                        <li key={client.id} onClick={() => selectClient(client)} className="p-3 hover:bg-pink-50 cursor-pointer border-b last:border-b-0">
+                                            {client.name} - {client.cpf}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
-
-                        {showSuccessMessage && (<div className="mb-4 p-4 bg-green-100 text-green-800 border-l-4 border-green-500 rounded-r-lg flex items-center"><CheckCircle className="mr-3" />Ficha de anamnese salva com sucesso!</div>)}
-
-                        {viewMode === 'list' && (
-                            <div>
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-2xl font-bold text-gray-700">Histórico de Anamneses</h3>
-                                    <button onClick={() => { setCurrentAnamnese(initialFormState); setViewMode('form'); setIsEditing(true); }} className="flex items-center bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors shadow-md">
-                                        <PlusCircle className="mr-2" /> Nova Anamnese
-                                    </button>
+                    ) : (
+                        <div>
+                            <div className="mb-6 p-4 bg-purple-50 rounded-lg flex justify-between items-center">
+                                <div>
+                                    <p className="font-bold text-lg text-purple-900">{selectedClient.name}</p>
+                                    <p className="text-sm text-gray-600">{selectedClient.cpf}</p>
                                 </div>
-                                <div className="space-y-3">
-                                    {clientAnamneses.length > 0 ? clientAnamneses.map(form => (
-                                        <div key={form.id} className="p-4 bg-gray-50 rounded-lg flex justify-between items-center">
-                                            <div>
-                                                <p className="font-bold text-gray-800">{new Date(form.createdAt).toLocaleDateString('pt-BR')}</p>
-                                                <p className="text-sm text-gray-600 truncate">Queixa: {form.queixa_principal || 'Não informada'}</p>
+                                <button onClick={() => setSelectedClient(null)} className="text-sm text-purple-600 hover:underline">Trocar Cliente</button>
+                            </div>
+
+                            {showSuccessMessage && (<div className="mb-4 p-4 bg-green-100 text-green-800 border-l-4 border-green-500 rounded-r-lg flex items-center"><CheckCircle className="mr-3" />Ficha de anamnese salva com sucesso!</div>)}
+
+                            {viewMode === 'list' && (
+                                <div>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-2xl font-bold text-gray-700">Histórico de Anamneses</h3>
+                                        <button onClick={() => { setCurrentAnamnese(initialFormState); setViewMode('form'); setIsEditing(true); }} className="flex items-center bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors shadow-md">
+                                            <PlusCircle className="mr-2" /> Nova Anamnese
+                                        </button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {clientAnamneses.length > 0 ? clientAnamneses.map(form => (
+                                            <div key={form.id} className="p-4 bg-gray-50 rounded-lg flex justify-between items-center">
+                                                <div>
+                                                    <p className="font-bold text-gray-800">{new Date(form.createdAt).toLocaleDateString('pt-BR')}</p>
+                                                    <p className="text-sm text-gray-600 truncate">Queixa: {form.queixa_principal || 'Não informada'}</p>
+                                                </div>
+                                                <button onClick={() => { setCurrentAnamnese(form); setViewMode('form'); setIsEditing(false); }} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full"><Eye size={18} /></button>
                                             </div>
-                                            <button onClick={() => { setCurrentAnamnese(form); setViewMode('form'); setIsEditing(false); }} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full"><Eye size={18} /></button>
-                                        </div>
-                                    )) : <p className="text-gray-500 text-center py-4">Nenhuma ficha de anamnese encontrada para esta cliente.</p>}
+                                        )) : <p className="text-gray-500 text-center py-4">Nenhuma ficha de anamnese encontrada para esta cliente.</p>}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {viewMode === 'form' && currentAnamnese && (
-                             <div className="space-y-8 animate-fade-in">
-                                <div className="flex justify-between items-center">
-                                    <button onClick={() => setViewMode('list')} className="text-purple-600 hover:underline">← Voltar para o histórico</button>
-                                    {!isEditing && (
-                                        <div className="flex items-center space-x-2">
-                                            <button onClick={() => alert('Exportar PDF: Funcionalidade em desenvolvimento.')} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-full"><FileDown size={18} /></button>
-                                            <button onClick={() => window.print()} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full"><Printer size={18} /></button>
-                                            <button onClick={() => setIsEditing(true)} className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-100 rounded-full"><Edit size={18} /></button>
-                                        </div>
-                                    )}
+                            {viewMode === 'form' && currentAnamnese && (
+                                 <div className="space-y-8 animate-fade-in">
+                                    <div className="flex justify-between items-center">
+                                        <button onClick={() => setViewMode('list')} className="text-purple-600 hover:underline">← Voltar para o histórico</button>
+                                        {!isEditing && (
+                                            <div className="flex items-center space-x-2">
+                                                <button onClick={() => alert('Exportar PDF: Funcionalidade em desenvolvimento.')} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-full"><FileDown size={18} /></button>
+                                                <button onClick={() => window.print()} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full"><Printer size={18} /></button>
+                                                <button onClick={() => setIsEditing(true)} className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-100 rounded-full"><Edit size={18} /></button>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <fieldset disabled={!isEditing} className="disabled:opacity-70">
+                                        <fieldset className="border border-gray-200 p-6 rounded-lg"><legend className="text-xl font-bold text-purple-800 px-2">Queixa Principal e Histórico Estético</legend><div className="space-y-4 mt-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Qual a sua principal queixa ou objetivo do tratamento?</label><textarea name="queixa_principal" value={currentAnamnese.queixa_principal || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, queixa_principal: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Já realizou algum procedimento estético anteriormente? Quais e quando?</label><textarea name="procedimentos_anteriores" value={currentAnamnese.procedimentos_anteriores || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, procedimentos_anteriores: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Teve alguma reação adversa ou complicação?</label><textarea name="reacao_adversa" value={currentAnamnese.reacao_adversa || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, reacao_adversa: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div></div></fieldset>
+                                        <fieldset className="border border-gray-200 p-6 rounded-lg mt-8"><legend className="text-xl font-bold text-purple-800 px-2">Histórico de Saúde</legend><div className="space-y-4 mt-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Possui alguma doença pré-existente (diabetes, hipertensão, etc)?</label><input type="text" name="doenca_preexistente" value={currentAnamnese.doenca_preexistente || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, doenca_preexistente: e.target.value})} className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400" /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Possui alguma alergia?</label><input type="text" name="alergia" value={currentAnamnese.alergia || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, alergia: e.target.value})} className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400" /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Faz uso de algum medicamento contínuo? Quais?</label><input type="text" name="medicamento_continuo" value={currentAnamnese.medicamento_continuo || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, medicamento_continuo: e.target.value})} className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400" /></div><RadioGroup label="É gestante ou está amamentando?" name="gestante_lactante" value={currentAnamnese.gestante_lactante || 'Não'} onChange={(e) => setCurrentAnamnese({...currentAnamnese, gestante_lactante: e.target.value})} disabled={!isEditing} /><RadioGroup label="Possui marca-passo ou prótese metálica?" name="marcapasso_protese" value={currentAnamnese.marcapasso_protese || 'Não'} onChange={(e) => setCurrentAnamnese({...currentAnamnese, marcapasso_protese: e.target.value})} disabled={!isEditing} /></div></fieldset>
+                                        <fieldset className="border border-gray-200 p-6 rounded-lg mt-8"><legend className="text-xl font-bold text-purple-800 px-2">Hábitos e Cuidados com a Pele</legend><div className="space-y-4 mt-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Qual sua rotina de cuidados com a pele (skincare)?</label><textarea name="rotina_skincare" value={currentAnamnese.rotina_skincare || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, rotina_skincare: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div><RadioGroup label="É fumante?" name="fumante" value={currentAnamnese.fumante || 'Não'} onChange={(e) => setCurrentAnamnese({...currentAnamnese, fumante: e.target.value})} disabled={!isEditing} /><RadioGroup label="Usa protetor solar diariamente?" name="protetor_solar" value={currentAnamnese.protetor_solar || 'Não'} onChange={(e) => setCurrentAnamnese({...currentAnamnese, protetor_solar: e.target.value})} disabled={!isEditing} /></div></fieldset>
+                                    </fieldset>
+                                    {isEditing && <button onClick={handleSave} className="w-full bg-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors shadow-md mt-8">Salvar Alterações</button>}
                                 </div>
-                                <fieldset disabled={!isEditing} className="disabled:opacity-70">
-                                    <fieldset className="border border-gray-200 p-6 rounded-lg"><legend className="text-xl font-bold text-purple-800 px-2">Queixa Principal e Histórico Estético</legend><div className="space-y-4 mt-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Qual a sua principal queixa ou objetivo do tratamento?</label><textarea name="queixa_principal" value={currentAnamnese.queixa_principal || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, queixa_principal: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Já realizou algum procedimento estético anteriormente? Quais e quando?</label><textarea name="procedimentos_anteriores" value={currentAnamnese.procedimentos_anteriores || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, procedimentos_anteriores: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Teve alguma reação adversa ou complicação?</label><textarea name="reacao_adversa" value={currentAnamnese.reacao_adversa || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, reacao_adversa: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div></div></fieldset>
-                                    <fieldset className="border border-gray-200 p-6 rounded-lg mt-8"><legend className="text-xl font-bold text-purple-800 px-2">Histórico de Saúde</legend><div className="space-y-4 mt-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Possui alguma doença pré-existente (diabetes, hipertensão, etc)?</label><input type="text" name="doenca_preexistente" value={currentAnamnese.doenca_preexistente || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, doenca_preexistente: e.target.value})} className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400" /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Possui alguma alergia?</label><input type="text" name="alergia" value={currentAnamnese.alergia || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, alergia: e.target.value})} className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400" /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Faz uso de algum medicamento contínuo? Quais?</label><input type="text" name="medicamento_continuo" value={currentAnamnese.medicamento_continuo || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, medicamento_continuo: e.target.value})} className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400" /></div><RadioGroup label="É gestante ou está amamentando?" name="gestante_lactante" value={currentAnamnese.gestante_lactante || 'Não'} onChange={(e) => setCurrentAnamnese({...currentAnamnese, gestante_lactante: e.target.value})} disabled={!isEditing} /><RadioGroup label="Possui marca-passo ou prótese metálica?" name="marcapasso_protese" value={currentAnamnese.marcapasso_protese || 'Não'} onChange={(e) => setCurrentAnamnese({...currentAnamnese, marcapasso_protese: e.target.value})} disabled={!isEditing} /></div></fieldset>
-                                    <fieldset className="border border-gray-200 p-6 rounded-lg mt-8"><legend className="text-xl font-bold text-purple-800 px-2">Hábitos e Cuidados com a Pele</legend><div className="space-y-4 mt-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Qual sua rotina de cuidados com a pele (skincare)?</label><textarea name="rotina_skincare" value={currentAnamnese.rotina_skincare || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, rotina_skincare: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div><RadioGroup label="É fumante?" name="fumante" value={currentAnamnese.fumante || 'Não'} onChange={(e) => setCurrentAnamnese({...currentAnamnese, fumante: e.target.value})} disabled={!isEditing} /><RadioGroup label="Usa protetor solar diariamente?" name="protetor_solar" value={currentAnamnese.protetor_solar || 'Não'} onChange={(e) => setCurrentAnamnese({...currentAnamnese, protetor_solar: e.target.value})} disabled={!isEditing} /></div></fieldset>
-                                </fieldset>
-                                {isEditing && <button onClick={handleSave} className="w-full bg-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors shadow-md mt-8">Salvar Alterações</button>}
-                            </div>
-                        )}
-                    </div>
-                )}
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
+            {selectedClient && currentAnamnese && (
+                <div className="hidden print:block">
+                    <AnamnesePrintLayout client={selectedClient} formData={currentAnamnese} />
+                </div>
+            )}
+        </div>
+    );
+};
+
+const AnamnesePrintLayout = ({ client, formData }) => {
+    return (
+        <div className="p-8 bg-white text-gray-800">
+            <header className="flex items-center justify-between pb-4 border-b-2 border-purple-200">
+                <div className="flex items-center">
+                    <div className="bg-gradient-to-r from-pink-400 to-purple-500 p-2 rounded-lg">
+                        <Settings className="text-white" size={24} />
+                    </div>
+                    <h1 className="text-3xl font-bold text-gray-800 ml-4">Instituto FEM</h1>
+                </div>
+                <div className="text-right">
+                    <h2 className="text-2xl font-bold text-purple-700">Ficha de Anamnese</h2>
+                    <p className="text-sm text-gray-500">Data: {new Date(formData.createdAt).toLocaleDateString('pt-BR')}</p>
+                </div>
+            </header>
+            <section className="mt-6">
+                <h3 className="text-xl font-bold text-purple-800 mb-2">Dados da Cliente</h3>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                    <p><strong>Nome:</strong> {client.name}</p>
+                    <p><strong>CPF:</strong> {client.cpf}</p>
+                    <p><strong>Telefone:</strong> {client.phone}</p>
+                    <p><strong>Email:</strong> {client.email}</p>
+                </div>
+            </section>
+            <section className="mt-6">
+                <h3 className="text-xl font-bold text-purple-800 mb-2 border-t pt-4">Queixa Principal e Histórico Estético</h3>
+                <div className="space-y-2 text-sm">
+                    <p><strong>Queixa Principal:</strong> {formData.queixa_principal}</p>
+                    <p><strong>Procedimentos Anteriores:</strong> {formData.procedimentos_anteriores}</p>
+                    <p><strong>Reações Adversas:</strong> {formData.reacao_adversa}</p>
+                </div>
+            </section>
+            <section className="mt-6">
+                <h3 className="text-xl font-bold text-purple-800 mb-2 border-t pt-4">Histórico de Saúde</h3>
+                <div className="space-y-2 text-sm">
+                    <p><strong>Doenças Pré-existentes:</strong> {formData.doenca_preexistente}</p>
+                    <p><strong>Alergias:</strong> {formData.alergia}</p>
+                    <p><strong>Medicamentos Contínuos:</strong> {formData.medicamento_continuo}</p>
+                    <div className="grid grid-cols-2 gap-x-8">
+                        <p><strong>Gestante/Lactante:</strong> {formData.gestante_lactante}</p>
+                        <p><strong>Marca-passo/Prótese:</strong> {formData.marcapasso_protese}</p>
+                    </div>
+                </div>
+            </section>
+            <section className="mt-6">
+                <h3 className="text-xl font-bold text-purple-800 mb-2 border-t pt-4">Hábitos e Cuidados com a Pele</h3>
+                <div className="space-y-2 text-sm">
+                    <p><strong>Rotina de Skincare:</strong> {formData.rotina_skincare}</p>
+                    <div className="grid grid-cols-2 gap-x-8">
+                        <p><strong>Fumante:</strong> {formData.fumante}</p>
+                        <p><strong>Usa Protetor Solar Diariamente:</strong> {formData.protetor_solar}</p>
+                    </div>
+                </div>
+            </section>
+            <footer className="mt-12 text-center text-xs text-gray-400 border-t pt-4">
+                <p>Instituto FEM - Cuidando da sua beleza com excelência.</p>
+            </footer>
         </div>
     );
 };
@@ -1179,9 +1247,24 @@ const MainApp = ({ user, handleLogout }) => {
                 .animate-scale-in { animation: scale-in 0.2s ease-out forwards; }
                 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
                 .animate-fade-in { animation: fade-in 0.3s ease-in-out forwards; }
+                @media print {
+                    body {
+                        background: none !important;
+                    }
+                    .no-print {
+                        display: none !important;
+                    }
+                    .print-area {
+                        display: block !important;
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                    }
+                }
             `}</style>
 
-            <aside className="w-64 bg-white/30 backdrop-blur-md p-6 flex-shrink-0 flex flex-col justify-between shadow-xl">
+            <aside className="w-64 bg-white/30 backdrop-blur-md p-6 flex-shrink-0 flex flex-col justify-between shadow-xl no-print">
                 <div>
                     <div className="flex items-center mb-12">
                         <div className="bg-gradient-to-r from-pink-400 to-purple-500 p-2 rounded-lg">
