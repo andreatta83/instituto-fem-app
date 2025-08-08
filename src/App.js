@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { User, Calendar, DollarSign, Package, ClipboardList, TrendingUp, Home, PlusCircle, Users, Box, Settings, ClipboardPlus, CheckCircle, XCircle, Search, Edit, Trash2, ChevronLeft, ChevronRight, Eye, Loader2, LogOut, Mail, Lock, ClipboardPen, ClipboardCheck } from 'lucide-react';
+import { User, Calendar, DollarSign, Package, ClipboardList, TrendingUp, Home, PlusCircle, Users, Box, Settings, ClipboardPlus, CheckCircle, XCircle, Search, Edit, Trash2, ChevronLeft, ChevronRight, Eye, Loader2, LogOut, Mail, Lock, ClipboardPen, ClipboardCheck, Printer, FileDown } from 'lucide-react';
 
 // --- Importações do Firebase ---
 import { initializeApp } from 'firebase/app';
@@ -670,9 +670,10 @@ const Clientes = ({ clients, appointments, services, userId, db }) => {
 const AnamneseClinica = ({ clients, anamneseForms, userId, db }) => {
     const [selectedClient, setSelectedClient] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [formData, setFormData] = useState({});
+    const [viewMode, setViewMode] = useState('list'); // 'list' or 'form'
+    const [currentAnamnese, setCurrentAnamnese] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-    const [showErrorMessage, setShowErrorMessage] = useState(false);
 
     const initialFormState = useMemo(() => ({
         queixa_principal: '', procedimentos_anteriores: '', reacao_adversa: '',
@@ -681,26 +682,24 @@ const AnamneseClinica = ({ clients, anamneseForms, userId, db }) => {
         fumante: 'Não', protetor_solar: 'Não'
     }), []);
 
-    useEffect(() => {
-        if (selectedClient) {
-            const existingForm = anamneseForms.find(f => f.clientId === selectedClient.id);
-            setFormData(existingForm || { ...initialFormState, clientId: selectedClient.id });
-        } else {
-            setFormData({});
-        }
-    }, [selectedClient, anamneseForms, initialFormState]);
-
     const handleSave = async () => {
-        if (!selectedClient) {
-            setShowErrorMessage(true);
-            setTimeout(() => setShowErrorMessage(false), 3000);
-            return;
-        }
         const collectionPath = `users/${userId}/anamneseForms`;
-        const docRef = doc(db, collectionPath, selectedClient.id);
-        await setDoc(docRef, formData);
+        if (currentAnamnese.id) { // Editando uma existente
+            const docRef = doc(db, collectionPath, currentAnamnese.id);
+            await updateDoc(docRef, currentAnamnese);
+        } else { // Criando uma nova
+            const dataToSave = {
+                ...currentAnamnese,
+                clientId: selectedClient.id,
+                createdAt: new Date().toISOString()
+            };
+            await addDoc(collection(db, collectionPath), dataToSave);
+        }
         setShowSuccessMessage(true);
         setTimeout(() => setShowSuccessMessage(false), 3000);
+        setViewMode('list');
+        setIsEditing(false);
+        setCurrentAnamnese(null);
     };
     
     const filteredClients = searchTerm ? clients.filter(client =>
@@ -711,19 +710,33 @@ const AnamneseClinica = ({ clients, anamneseForms, userId, db }) => {
     const selectClient = (client) => {
         setSelectedClient(client);
         setSearchTerm('');
+        setViewMode('list');
     };
+    
+    const clientAnamneses = useMemo(() => {
+        if (!selectedClient) return [];
+        return anamneseForms
+            .filter(form => form.clientId === selectedClient.id)
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }, [selectedClient, anamneseForms]);
 
-    const RadioGroup = ({ label, name, value, onChange }) => (
+    const RadioGroup = ({ label, name, value, onChange, disabled }) => (
         <div className="flex items-center space-x-4">
             <span className="text-gray-700">{label}</span>
-            <label className="flex items-center cursor-pointer"><input type="radio" name={name} value="Sim" checked={value === 'Sim'} onChange={onChange} className="form-radio text-purple-600 h-4 w-4" /><span className="ml-2">Sim</span></label>
-            <label className="flex items-center cursor-pointer"><input type="radio" name={name} value="Não" checked={value === 'Não'} onChange={onChange} className="form-radio text-purple-600 h-4 w-4" /><span className="ml-2">Não</span></label>
+            <label className="flex items-center cursor-pointer">
+                <input type="radio" name={name} value="Sim" checked={value === 'Sim'} onChange={onChange} disabled={disabled} className="form-radio text-purple-600 h-4 w-4" />
+                <span className="ml-2">Sim</span>
+            </label>
+            <label className="flex items-center cursor-pointer">
+                <input type="radio" name={name} value="Não" checked={value === 'Não'} onChange={onChange} disabled={disabled} className="form-radio text-purple-600 h-4 w-4" />
+                <span className="ml-2">Não</span>
+            </label>
         </div>
     );
     
     return (
         <div>
-            <SectionTitle title="Anamnese Clínica" subtitle="Preencha a ficha para garantir a segurança do tratamento." />
+            <SectionTitle title="Anamnese Clínica" subtitle="Gerencie o histórico de anamneses das suas clientes." />
             <div className="bg-white p-8 rounded-2xl shadow-lg">
                 {!selectedClient ? (
                     <div className="mb-6">
@@ -743,24 +756,59 @@ const AnamneseClinica = ({ clients, anamneseForms, userId, db }) => {
                         )}
                     </div>
                 ) : (
-                    <div className="mb-6 p-4 bg-purple-50 rounded-lg flex justify-between items-center">
-                        <div>
-                            <p className="font-bold text-lg text-purple-900">{selectedClient.name}</p>
-                            <p className="text-sm text-gray-600">{selectedClient.cpf}</p>
+                    <div>
+                        <div className="mb-6 p-4 bg-purple-50 rounded-lg flex justify-between items-center">
+                            <div>
+                                <p className="font-bold text-lg text-purple-900">{selectedClient.name}</p>
+                                <p className="text-sm text-gray-600">{selectedClient.cpf}</p>
+                            </div>
+                            <button onClick={() => setSelectedClient(null)} className="text-sm text-purple-600 hover:underline">Trocar Cliente</button>
                         </div>
-                        <button onClick={() => setSelectedClient(null)} className="text-sm text-purple-600 hover:underline">Trocar Cliente</button>
-                    </div>
-                )}
 
-                {showSuccessMessage && (<div className="mb-4 p-4 bg-green-100 text-green-800 border-l-4 border-green-500 rounded-r-lg flex items-center"><CheckCircle className="mr-3" />Ficha de anamnese salva com sucesso!</div>)}
-                {showErrorMessage && (<div className="mb-4 p-4 bg-red-100 text-red-800 border-l-4 border-red-500 rounded-r-lg flex items-center"><XCircle className="mr-3" />Por favor, selecione uma cliente primeiro.</div>)}
+                        {showSuccessMessage && (<div className="mb-4 p-4 bg-green-100 text-green-800 border-l-4 border-green-500 rounded-r-lg flex items-center"><CheckCircle className="mr-3" />Ficha de anamnese salva com sucesso!</div>)}
 
-                {selectedClient && (
-                    <div className="space-y-8 animate-fade-in">
-                        <fieldset className="border border-gray-200 p-6 rounded-lg"><legend className="text-xl font-bold text-purple-800 px-2">Queixa Principal e Histórico Estético</legend><div className="space-y-4 mt-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Qual a sua principal queixa ou objetivo do tratamento?</label><textarea name="queixa_principal" value={formData.queixa_principal || ''} onChange={(e) => setFormData({...formData, queixa_principal: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Já realizou algum procedimento estético anteriormente? Quais e quando?</label><textarea name="procedimentos_anteriores" value={formData.procedimentos_anteriores || ''} onChange={(e) => setFormData({...formData, procedimentos_anteriores: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Teve alguma reação adversa ou complicação?</label><textarea name="reacao_adversa" value={formData.reacao_adversa || ''} onChange={(e) => setFormData({...formData, reacao_adversa: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div></div></fieldset>
-                        <fieldset className="border border-gray-200 p-6 rounded-lg"><legend className="text-xl font-bold text-purple-800 px-2">Histórico de Saúde</legend><div className="space-y-4 mt-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Possui alguma doença pré-existente (diabetes, hipertensão, etc)?</label><input type="text" name="doenca_preexistente" value={formData.doenca_preexistente || ''} onChange={(e) => setFormData({...formData, doenca_preexistente: e.target.value})} className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400" /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Possui alguma alergia?</label><input type="text" name="alergia" value={formData.alergia || ''} onChange={(e) => setFormData({...formData, alergia: e.target.value})} className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400" /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Faz uso de algum medicamento contínuo? Quais?</label><input type="text" name="medicamento_continuo" value={formData.medicamento_continuo || ''} onChange={(e) => setFormData({...formData, medicamento_continuo: e.target.value})} className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400" /></div><RadioGroup label="É gestante ou está amamentando?" name="gestante_lactante" value={formData.gestante_lactante || 'Não'} onChange={(e) => setFormData({...formData, gestante_lactante: e.target.value})} /><RadioGroup label="Possui marca-passo ou prótese metálica?" name="marcapasso_protese" value={formData.marcapasso_protese || 'Não'} onChange={(e) => setFormData({...formData, marcapasso_protese: e.target.value})} /></div></fieldset>
-                        <fieldset className="border border-gray-200 p-6 rounded-lg"><legend className="text-xl font-bold text-purple-800 px-2">Hábitos e Cuidados com a Pele</legend><div className="space-y-4 mt-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Qual sua rotina de cuidados com a pele (skincare)?</label><textarea name="rotina_skincare" value={formData.rotina_skincare || ''} onChange={(e) => setFormData({...formData, rotina_skincare: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div><RadioGroup label="É fumante?" name="fumante" value={formData.fumante || 'Não'} onChange={(e) => setFormData({...formData, fumante: e.target.value})} /><RadioGroup label="Usa protetor solar diariamente?" name="protetor_solar" value={formData.protetor_solar || 'Não'} onChange={(e) => setFormData({...formData, protetor_solar: e.target.value})} /></div></fieldset>
-                        <button onClick={handleSave} className="w-full bg-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors shadow-md">Salvar Ficha de Anamnese</button>
+                        {viewMode === 'list' && (
+                            <div>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-2xl font-bold text-gray-700">Histórico de Anamneses</h3>
+                                    <button onClick={() => { setCurrentAnamnese(initialFormState); setViewMode('form'); setIsEditing(true); }} className="flex items-center bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors shadow-md">
+                                        <PlusCircle className="mr-2" /> Nova Anamnese
+                                    </button>
+                                </div>
+                                <div className="space-y-3">
+                                    {clientAnamneses.length > 0 ? clientAnamneses.map(form => (
+                                        <div key={form.id} className="p-4 bg-gray-50 rounded-lg flex justify-between items-center">
+                                            <div>
+                                                <p className="font-bold text-gray-800">{new Date(form.createdAt).toLocaleDateString('pt-BR')}</p>
+                                                <p className="text-sm text-gray-600 truncate">Queixa: {form.queixa_principal || 'Não informada'}</p>
+                                            </div>
+                                            <button onClick={() => { setCurrentAnamnese(form); setViewMode('form'); setIsEditing(false); }} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full"><Eye size={18} /></button>
+                                        </div>
+                                    )) : <p className="text-gray-500 text-center py-4">Nenhuma ficha de anamnese encontrada para esta cliente.</p>}
+                                </div>
+                            </div>
+                        )}
+
+                        {viewMode === 'form' && currentAnamnese && (
+                             <div className="space-y-8 animate-fade-in">
+                                <div className="flex justify-between items-center">
+                                    <button onClick={() => setViewMode('list')} className="text-purple-600 hover:underline">← Voltar para o histórico</button>
+                                    {!isEditing && (
+                                        <div className="flex items-center space-x-2">
+                                            <button onClick={() => alert('Exportar PDF: Funcionalidade em desenvolvimento.')} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-full"><FileDown size={18} /></button>
+                                            <button onClick={() => alert('Imprimir: Funcionalidade em desenvolvimento.')} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full"><Printer size={18} /></button>
+                                            <button onClick={() => setIsEditing(true)} className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-100 rounded-full"><Edit size={18} /></button>
+                                        </div>
+                                    )}
+                                </div>
+                                <fieldset disabled={!isEditing} className="disabled:opacity-70">
+                                    <fieldset className="border border-gray-200 p-6 rounded-lg"><legend className="text-xl font-bold text-purple-800 px-2">Queixa Principal e Histórico Estético</legend><div className="space-y-4 mt-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Qual a sua principal queixa ou objetivo do tratamento?</label><textarea name="queixa_principal" value={currentAnamnese.queixa_principal || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, queixa_principal: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Já realizou algum procedimento estético anteriormente? Quais e quando?</label><textarea name="procedimentos_anteriores" value={currentAnamnese.procedimentos_anteriores || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, procedimentos_anteriores: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Teve alguma reação adversa ou complicação?</label><textarea name="reacao_adversa" value={currentAnamnese.reacao_adversa || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, reacao_adversa: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div></div></fieldset>
+                                    <fieldset className="border border-gray-200 p-6 rounded-lg mt-8"><legend className="text-xl font-bold text-purple-800 px-2">Histórico de Saúde</legend><div className="space-y-4 mt-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Possui alguma doença pré-existente (diabetes, hipertensão, etc)?</label><input type="text" name="doenca_preexistente" value={currentAnamnese.doenca_preexistente || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, doenca_preexistente: e.target.value})} className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400" /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Possui alguma alergia?</label><input type="text" name="alergia" value={currentAnamnese.alergia || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, alergia: e.target.value})} className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400" /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Faz uso de algum medicamento contínuo? Quais?</label><input type="text" name="medicamento_continuo" value={currentAnamnese.medicamento_continuo || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, medicamento_continuo: e.target.value})} className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400" /></div><RadioGroup label="É gestante ou está amamentando?" name="gestante_lactante" value={currentAnamnese.gestante_lactante || 'Não'} onChange={(e) => setCurrentAnamnese({...currentAnamnese, gestante_lactante: e.target.value})} disabled={!isEditing} /><RadioGroup label="Possui marca-passo ou prótese metálica?" name="marcapasso_protese" value={currentAnamnese.marcapasso_protese || 'Não'} onChange={(e) => setCurrentAnamnese({...currentAnamnese, marcapasso_protese: e.target.value})} disabled={!isEditing} /></div></fieldset>
+                                    <fieldset className="border border-gray-200 p-6 rounded-lg mt-8"><legend className="text-xl font-bold text-purple-800 px-2">Hábitos e Cuidados com a Pele</legend><div className="space-y-4 mt-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Qual sua rotina de cuidados com a pele (skincare)?</label><textarea name="rotina_skincare" value={currentAnamnese.rotina_skincare || ''} onChange={(e) => setCurrentAnamnese({...currentAnamnese, rotina_skincare: e.target.value})} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-400 focus:border-purple-400"></textarea></div><RadioGroup label="É fumante?" name="fumante" value={currentAnamnese.fumante || 'Não'} onChange={(e) => setCurrentAnamnese({...currentAnamnese, fumante: e.target.value})} disabled={!isEditing} /><RadioGroup label="Usa protetor solar diariamente?" name="protetor_solar" value={currentAnamnese.protetor_solar || 'Não'} onChange={(e) => setCurrentAnamnese({...currentAnamnese, protetor_solar: e.target.value})} disabled={!isEditing} /></div></fieldset>
+                                </fieldset>
+                                {isEditing && <button onClick={handleSave} className="w-full bg-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors shadow-md mt-8">Salvar Alterações</button>}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
